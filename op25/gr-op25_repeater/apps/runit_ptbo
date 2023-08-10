@@ -1,0 +1,6 @@
+#!/bin/bash
+
+#strace ./multi_rx.py -v 9 -c smartnet_opp.json 
+#./multi_rx.py -v 9 -c smartnet_opp.json 2> stderr.2
+#./multi_rx.py -v 9 -c smartnet_ptbo.json
+./multi_rx.py  -c smartnet_ptbo.json
