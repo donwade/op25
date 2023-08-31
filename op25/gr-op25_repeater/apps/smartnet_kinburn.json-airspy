@@ -10,7 +10,6 @@
             "excess_bw": 0.35, 
             "filter_type": "fsk2", 
             "if_rate": 18000, 
-            "plot": "mixer",
             "enable_analog": "off",
             "symbol_rate": 3600
         }
