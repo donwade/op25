@@ -61,7 +61,7 @@ op25GoldenDefaultObj = {
             "ppm": 0.00,
             "rate": 3000000,
             "usable_bw_pct": 0.95,
-            "tunable": False
+            "tunable": True
         }
     ],
     "trunking": {
@@ -69,7 +69,7 @@ op25GoldenDefaultObj = {
         "chans": [
             {
                 "nac": "0x0",
-                "sysname": "PTBO city",
+                "sysname": "Ottawa",
                 "control_channel_list": "868.6625",
                 "whitelist": "",
                 "blacklist": "",
@@ -80,11 +80,25 @@ op25GoldenDefaultObj = {
             }
         ]
     },
+    "audio": {
+        "module": "sockaudio.py",
+        "instances": [
+            {
+                "instance_name": "audio0",
+                "device_name": "default",
+                "udp_port": 23456,
+                "audio_gain": 1.0,
+                "number_channels": 1
+            }
+
+			
+        ]
+    },
     "terminal": {
         "module": "terminal.py",
         "terminal_type": "curses",
         "#terminal_type": "http:127.0.0.1:8080",
-        "curses_plot_interval": 0.1,
+        "curses_plot_interval": 0.2,
         "http_plot_interval": 1.0,
         "http_plot_directory": "../www/images",
         "tuning_step_large": 1200,

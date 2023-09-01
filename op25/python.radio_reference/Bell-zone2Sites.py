@@ -193,6 +193,7 @@ def testModifyJson():
 def    printWorkingJson( headerMessage ):
     #ttps://stackoverflow.com/questions/55944758/read-a-pickled-dictionary-python
     # make a python data pretty printer.
+    global shortDispName
     print ("\n\n", headerMessage , "  -----------------------------------------------\n")
 
     #** PrettyPrinter width=1, force each element to have its own personal line or it bashes them ALL into 80 charwidth
@@ -202,10 +203,10 @@ def    printWorkingJson( headerMessage ):
     serialized = json.dumps(workingJsonObj)
     print (serialized)
 
-    global shortDispName
 
     #https://stackoverflow.com/questions/4675728/redirect-stdout-to-a-file-in-python
     fileName = "smartnet-"+ shortDispName + ".jason"
+    print (">>>>>>>>>> see ", fileName, "<<<<<<<<<<<<<<<<<<")
     with open(fileName, "w") as outfile:
         with redirect_stdout(outfile):
             print(serialized)
@@ -231,7 +232,7 @@ SiteNameLong = []
 SiteNameShort = []
 SiteLocations = []
 
-shortDispName = ''
+shortDispName = ""
 voiceChans=[]
 ctrlChans=[]
 
@@ -247,7 +248,7 @@ def hairball():
     # call any Json format routines now !
     global voiceChans, ctrlChans 
     
-    voiceChans = voiceChans[:-1]
+    #voiceChans = voiceChans[:-1]
     #ctrlChans = ctrlChans[:-1]
 
 
@@ -263,7 +264,7 @@ def hairball():
     setDictInListOfDict('trunking', 'chans', 'control_channel_list', ','.join(ctrlChans))
     printWorkingJson("AFTER")
 
-def parseOneRecord(aRecord):
+def parseStartRecord(aRecord):
 
     global oldSiteNum, voiceChans, ctrlChans, shortDispName
 
@@ -271,8 +272,6 @@ def parseOneRecord(aRecord):
 
     if ( aSiteNum != None):
 
-        if ( aSiteNum != oldSiteNum):
-            hairball()
  
         oldSiteNum = aSiteNum
         voiceChans = []
@@ -291,15 +290,15 @@ def parseOneRecord(aRecord):
 
         # back to real parsing of sites  --------------------------------------
 
-        #print ("------ aSiteNum = \n", aSiteNum, "\n")
-        #print ("--- aSiteNum.text =", aSiteNum.text, "\n")
+        print ("------ aSiteNum = \n", aSiteNum, "\n")
+        print ("--- aSiteNum.text =", aSiteNum.text, "\n")
         decSiteNumber = int(aSiteNum.text.split(' ')[0])
         SiteNumbers.append(decSiteNumber)
         print ("decSiteNum :", decSiteNumber)
         print ("fullGPSlink = ", fullGPSlink)
 
         aFullName = aRecord.find('td', style='width: 100%')
-        #print("--- aFullName =\n", aFullName, "\n")
+        print("--- aFullName =\n", aFullName, "\n")
         
         longDisplayName = aFullName.text.split('(')[0] # long display name is left of (blah)
         print ("long Display:", longDisplayName)
@@ -307,7 +306,7 @@ def parseOneRecord(aRecord):
 
         shortDispName = aFullName.text.split('(')[1].split(')')[0]  # display name is inside (blah)
         SiteNameShort.append(shortDispName)
-        print ("short Display:", shortDispName)
+        print (">>>>>>> short Display:", shortDispName)
 
         aAffiliation = aRecord.find('td', style='width: 100%', class_='noWrapTd')
         #print ("-----\naLocation = ", aAffiliation)
@@ -316,7 +315,7 @@ def parseOneRecord(aRecord):
 
     else:
         #print ("note: parsing a frequency only row\n", aRecord, "\n")
-        print ("note: parsing a frequency only row\nadding more voice/control")
+        print ("note: parsing a frequency only row ... adding more voice/control")
 
     # all records have frequencies in them.
 
@@ -341,7 +340,35 @@ def parseOneRecord(aRecord):
         print ("----- vFreq =", vFreq)
         voiceChans.append(vFreq)
  
+def parseNextRecord(aRecord):
 
+    global oldSiteNum, voiceChans, ctrlChans, shortDispName
+
+    #print ("note: parsing a frequency only row\n", aRecord, "\n\n")
+    print ("note: parsing a frequency only row ... adding more voice/control")
+
+    # all records have frequencies in them.
+
+    listcFreqs = aRecord.findAll('td', class_='data-text crtl-pri')
+    for aFreq in listcFreqs:
+        cFreq = aFreq.text[:-1]  #drop the trailing c
+        print ("----- cFreq =", cFreq)
+        ctrlChans.append(cFreq)
+ 
+    # findAll using just class='data-text' does implied WILDCARD like 'data-text*'
+    # above picks up too many 'data-text*' hits
+    # restrict findall to do a whole word exact match 
+    # lamda is a narrow scope function inside a function call :)
+    # https://stackoverflow.com/questions/22726860/beautifulsoup-webscraping-find-all-finding-exact-match
+
+    listvFreqs = aRecord.findAll(lambda tag: 
+                                    tag.name =='td' 
+                                    and tag.get('class') == ['data-text'])
+
+    for aFreq in listvFreqs:
+        vFreq = aFreq.text
+        print ("----- vFreq =", vFreq)
+        voiceChans.append(vFreq)
 
 #-------------------------------------------------------------------------
 #*** try:
@@ -370,13 +397,14 @@ try:
     manyRecords = aSiteNum.findAll('tr')
     #print ("==========================================\n", manyRecords)
 
-    skipFirst = True
+    bMustDump = False
+    bSkipFirstRecord = True
 
     for aRecord in manyRecords:
 
         # first entry is pretty layout and database stuff
-        if  (skipFirst == True) :
-            skipFirst = False
+        if  (bSkipFirstRecord == True) :
+            bSkipFirstRecord = False
             #print("skipping header text layout ?\n", aRecord, "\n")
             continue
 
@@ -386,14 +414,29 @@ try:
         #creating a dataframe   
         siteDataTable = pd.DataFrame({ "SiteNum": SiteNumbers, "Long Name" : SiteNameLong, "Short Name" : SiteNameShort, "Location": SiteLocations } )
 
-        parseOneRecord(aRecord)
+        aSiteNum = aRecord.find('td', class_='data-text fit')
+        if (bMustDump == True):
+            hairball()
+            bMustDump = False
+        if ( aSiteNum != None):
+            print ("aSiteNum found\n")
+            parseStartRecord(aRecord)
+            if (oldSiteNum != aSiteNum ):
+                print ("kkkkkkkkkkkkkkkkkkkkkkkkkkk")
+                hairball()
+                oldSiteNum = aSiteNum
+        else:
+            print ("aSiteNum not found\n")
+            parseNextRecord(aRecord)
+            bMustDump = True
 
     # don't strand the last site processed, there won't be a following site
     # to force it to cough out site data
     #                 
+    hairball()
     print ("")
-    print ("voiceChans channels :", voiceChans)
-    print ("ctrlChans  channels :", ctrlChans)
+    print ("voiceChans channels :\n", voiceChans, '\n')
+    print ("ctrlChans  channels :\n", ctrlChans)
 
     #whatever json calls
 
