@@ -29,63 +29,54 @@ os.system('clear')
 op25GoldenDefaultObj = {
     "channels": [
         {
-            "name": "control channel", 
-            "trunking_sysname": "Example",
-            "device": "rtl0",
-            "raw_output": "",
-            "demod_type": "fsk", 
-            "destination": "smartnet", 
-            "excess_bw": 0.35, 
-            "filter_type": "fsk2", 
-            "if_rate": 18000, 
+            "name": "Voice_ch1",
+            "device": "sdr0",
+            "trunking_sysname": "PTBO city",
+            "meta_stream_name": "stream_0",
+            "demod_type": "fsk4", 
+            "cqpsk_tracking": False,
+            "tracking_threshold": 120,
+            "tracking_feedback": 0.75,
+            "destination": "udp://127.0.0.1:23466",
+            "excess_bw": 0.2,
+            "filter_type": "rc",
+            "frequency": 773843750,
+            "if_rate": 24000,
+            "plot": "",
+            "symbol_rate": 4800,
             "enable_analog": "off",
-            "symbol_rate": 3600
+            "blacklist": "",
+            "whitelist": "",
+            "crypt_keys": ""
         }
     ], 
     "devices": [
         {
-            "args": "airspy=0", 
-            "frequency": 987654321, 
-            "gains": "LNA:39", 
-            "name": "rtl0", 
-            "offset": 0, 
-            "ppm": 0.0, 
-            "rate": 3000000, 
-            "tunable": True
+            "args": "airspy=0",
+            "frequency": 868662500,
+            "gains": "LNA:15,MIX:15,IF:5",
+            "gain_mode": False,
+            "name": "sdr0",
+            "offset": 0,
+            "ppm": 0.00,
+            "rate": 3000000,
+            "usable_bw_pct": 0.95,
+            "tunable": False
         }
     ],
     "trunking": {
-        "module": "tk_smartnet.py",
+        "module": "tk_p25.py",
         "chans": [
             {
-                "sysname": "Example",
-                "control_channel_list": "987.654321",
-                "tgid_tags_file": "",
-                "tgid_hold_time": 2.0,
-                "blacklist": "",
+                "nac": "0x0",
+                "sysname": "PTBO city",
+                "control_channel_list": "868.6625",
                 "whitelist": "",
-                "bandplan_comment": "https://www.radioreference.com/apps/db/?sid=2560",
-                "bandplan": "400",
-                "bp_comment": "The bp_ parameters are only used by the 400 bandplan",
-                "bp_spacing": 0.015,
-                "bp_base": 141.015,
-                "bp_base_offset": 380,
-                "bp_mid": 151.730,
-                "bp_mid_offset": 579,
-                "bp_high": 154.320,
-                "bp_high_offset": 632
-            }
-        ]
-    },
-    "audio": {
-        "module": "sockaudio.py",
-        "instances": [
-            {
-                "instance_name": "audio0",
-                "device_name": "default",
-                "udp_port": 23456,
-                "audio_gain": 1.0,
-                "number_channels": 1
+                "blacklist": "",
+                "tgid_tags_file": "trunk-tags.tsv",
+                "rid_tags_file": "trunk-rids.tsv",
+                "tdma_cc": False,
+                "crypt_behavior": 2
             }
         ]
     },
@@ -93,7 +84,7 @@ op25GoldenDefaultObj = {
         "module": "terminal.py",
         "terminal_type": "curses",
         "#terminal_type": "http:127.0.0.1:8080",
-        "curses_plot_interval": 0.2,
+        "curses_plot_interval": 0.1,
         "http_plot_interval": 1.0,
         "http_plot_directory": "../www/images",
         "tuning_step_large": 1200,
@@ -193,6 +184,8 @@ def testModifyJson():
 def    printWorkingJson( headerMessage ):
     #ttps://stackoverflow.com/questions/55944758/read-a-pickled-dictionary-python
     # make a python data pretty printer.
+    global shortDispName
+
     print ("\n\n", headerMessage , "  -----------------------------------------------\n")
 
     #** PrettyPrinter width=1, force each element to have its own personal line or it bashes them ALL into 80 charwidth
@@ -202,10 +195,10 @@ def    printWorkingJson( headerMessage ):
     serialized = json.dumps(workingJsonObj)
     print (serialized)
 
-    global shortDispName
 
     #https://stackoverflow.com/questions/4675728/redirect-stdout-to-a-file-in-python
-    fileName = "smartnet-"+ shortDispName + ".jason"
+    fileName = "ottP25-"+ shortDispName + ".jason"
+    print (">>>>>>>>>> see ", fileName, "<<<<<<<<<<<<<<<<<<")
     with open(fileName, "w") as outfile:
         with redirect_stdout(outfile):
             print(serialized)
@@ -231,12 +224,12 @@ SiteNameLong = []
 SiteNameShort = []
 SiteLocations = []
 
-shortDispName = ''
+shortDispName = ""
 voiceChans=[]
 ctrlChans=[]
 
 RadioZoneHttpRoot = 'https://www.radioreference.com'
-RadioZoneTGnSites     = RadioZoneHttpRoot + '/db/sid/2560'
+RadioZoneTGnSites     = RadioZoneHttpRoot + '/db/sid/8161'
 
 oldSiteNum = -1
 
@@ -247,7 +240,7 @@ def hairball():
     # call any Json format routines now !
     global voiceChans, ctrlChans 
     
-    voiceChans = voiceChans[:-1]
+    #voiceChans = voiceChans[:-1]
     #ctrlChans = ctrlChans[:-1]
 
 
@@ -263,7 +256,7 @@ def hairball():
     setDictInListOfDict('trunking', 'chans', 'control_channel_list', ','.join(ctrlChans))
     printWorkingJson("AFTER")
 
-def parseOneRecord(aRecord):
+def parseStartRecord(aRecord):
 
     global oldSiteNum, voiceChans, ctrlChans, shortDispName
 
@@ -271,9 +264,6 @@ def parseOneRecord(aRecord):
 
     if ( aSiteNum != None):
 
-        if ( aSiteNum != oldSiteNum):
-            hairball()
- 
         oldSiteNum = aSiteNum
         voiceChans = []
         ctrlChans = []
@@ -291,32 +281,33 @@ def parseOneRecord(aRecord):
 
         # back to real parsing of sites  --------------------------------------
 
-        #print ("------ aSiteNum = \n", aSiteNum, "\n")
-        #print ("--- aSiteNum.text =", aSiteNum.text, "\n")
+        print ("------ aSiteNum = \n", aSiteNum, "\n")
+        print ("--- aSiteNum.text =", aSiteNum.text, "\n")
         decSiteNumber = int(aSiteNum.text.split(' ')[0])
         SiteNumbers.append(decSiteNumber)
         print ("decSiteNum :", decSiteNumber)
         print ("fullGPSlink = ", fullGPSlink)
 
         aFullName = aRecord.find('td', style='width: 100%')
-        #print("--- aFullName =\n", aFullName, "\n")
+        print("--- aFullName =\n", aFullName, "\n")
         
         longDisplayName = aFullName.text.split('(')[0] # long display name is left of (blah)
         print ("long Display:", longDisplayName)
         SiteNameLong.append(longDisplayName)
 
-        shortDispName = aFullName.text.split('(')[1].split(')')[0]  # display name is inside (blah)
+        shortDispName = longDisplayName.replace(' ','-')
+        #shortDispName = aFullName.text.split('(')[1].split(')')[0]  # display name is inside (blah)
         SiteNameShort.append(shortDispName)
-        print ("short Display:", shortDispName)
+        print (">>>>>>> short Display:", shortDispName)
 
-        aAffiliation = aRecord.find('td', style='width: 100%', class_='noWrapTd')
+        #aAffiliation = aRecord.find('td', style='width: 100%', class_='noWrapTd')
         #print ("-----\naLocation = ", aAffiliation)
-        print ("aAffiliation :", aAffiliation.text)
-        SiteLocations.append(aAffiliation.text)
+        #print ("aAffiliation :", aAffiliation.text)
+        #SiteLocations.append(aAffiliation.text)
 
     else:
-        #print ("note: parsing a frequency only row\n", aRecord, "\n")
-        print ("note: parsing a frequency only row\nadding more voice/control")
+        #print ("note: parsing a frequency only row\n", aRecord, "\n\n")
+        print ("note: parsing a frequency only row ... adding more voice/control")
 
     # all records have frequencies in them.
 
@@ -341,7 +332,35 @@ def parseOneRecord(aRecord):
         print ("----- vFreq =", vFreq)
         voiceChans.append(vFreq)
  
+def parseNextRecord(aRecord):
 
+    global oldSiteNum, voiceChans, ctrlChans, shortDispName
+
+    #print ("note: parsing a frequency only row\n", aRecord, "\n\n")
+    print ("note: parsing a frequency only row ... adding more voice/control")
+
+    # all records have frequencies in them.
+
+    listcFreqs = aRecord.findAll('td', class_='data-text crtl-pri')
+    for aFreq in listcFreqs:
+        cFreq = aFreq.text[:-1]  #drop the trailing c
+        print ("----- cFreq =", cFreq)
+        ctrlChans.append(cFreq)
+ 
+    # findAll using just class='data-text' does implied WILDCARD like 'data-text*'
+    # above picks up too many 'data-text*' hits
+    # restrict findall to do a whole word exact match 
+    # lamda is a narrow scope function inside a function call :)
+    # https://stackoverflow.com/questions/22726860/beautifulsoup-webscraping-find-all-finding-exact-match
+
+    listvFreqs = aRecord.findAll(lambda tag: 
+                                    tag.name =='td' 
+                                    and tag.get('class') == ['data-text'])
+
+    for aFreq in listvFreqs:
+        vFreq = aFreq.text
+        print ("----- vFreq =", vFreq)
+        voiceChans.append(vFreq)
 
 #-------------------------------------------------------------------------
 #*** try:
@@ -370,13 +389,14 @@ try:
     manyRecords = aSiteNum.findAll('tr')
     #print ("==========================================\n", manyRecords)
 
-    skipFirst = True
+    bMustDump = False
+    bSkipFirstRecord = True
 
     for aRecord in manyRecords:
 
         # first entry is pretty layout and database stuff
-        if  (skipFirst == True) :
-            skipFirst = False
+        if  (bSkipFirstRecord == True) :
+            bSkipFirstRecord = False
             #print("skipping header text layout ?\n", aRecord, "\n")
             continue
 
@@ -384,16 +404,36 @@ try:
         #print ("---------------------------- aRecord = \n", aRecord, "\n")
 
         #creating a dataframe   
-        siteDataTable = pd.DataFrame({ "SiteNum": SiteNumbers, "Long Name" : SiteNameLong, "Short Name" : SiteNameShort, "Location": SiteLocations } )
+        siteDataTable = pd.DataFrame({ "SiteNum": SiteNumbers, "Long Name" : SiteNameLong, "Short Name" : SiteNameShort } )
 
-        parseOneRecord(aRecord)
+        aSiteNum = aRecord.find('td', class_='data-text fit')
+
+        if (bMustDump == True):
+            hairball()
+            bMustDump = False
+
+        if ( aSiteNum != None):
+            print ("aSiteNum found\n")
+            parseStartRecord(aRecord)
+
+            if (oldSiteNum != aSiteNum ):
+                print ("kkkkkkkkkkkkkkkkkkkkkkkkkkk")
+                hairball()
+                oldSiteNum = aSiteNum
+            
+        else:
+            print ("aSiteNum not found\n")
+            parseNextRecord(aRecord)
+            bMustDump = True
 
     # don't strand the last site processed, there won't be a following site
     # to force it to cough out site data
-    #                 
+    #
+    hairball()
+
     print ("")
-    print ("voiceChans channels :", voiceChans)
-    print ("ctrlChans  channels :", ctrlChans)
+    print ("voiceChans channels :\n", voiceChans, '\n')
+    print ("ctrlChans  channels :\n", ctrlChans)
 
     #whatever json calls
 
