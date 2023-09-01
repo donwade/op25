@@ -1,5 +1,27 @@
 #!/bin/bash
+reset
 
-#strace ./multi_rx.py -v 9 -c smartnet_opp.json 
-./multi_rx.py -v 9 -c smartnet-PETERB.jason
-#./multi_rx.py -v 9 -c smartnet_opp.json 2> stderr.2
+thePID=9999
+
+function cleanup
+{
+    trap - 0 1 2 15;
+    echo "---------------- exiting kill pid $thePID"
+    kill -9 $thePID
+    exit
+}
+
+hardware=`lsusb | grep -c 'Airspy' `
+if [ $hardware == 0 ]; then
+    YELLOW "no airspy plugged in"
+    exit
+fi
+
+trap cleanup 0 1 2 15;
+
+xterm -fs 11 -fa AndroidMono -geometry 79x21 -n 'terminal' -hold -e "./multi_rx.py -v 9 -c smartnet-PETERB.jason 2>`tty`" &
+thePID=$!
+echo $thePID
+wait $thePID
+
+
