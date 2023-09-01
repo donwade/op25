@@ -1,0 +1,27 @@
+#!/bin/bash
+reset
+
+thePID=9999
+
+function cleanup
+{
+    trap - 0 1 2 15;
+    echo "---------------- exiting kill pid $thePID"
+    kill -9 $thePID
+    exit
+}
+
+hardware=`lsusb | grep -c 'Airspy' `
+if [ $hardware == 0 ]; then
+    YELLOW "no airspy plugged in"
+    exit
+fi
+
+trap cleanup 0 1 2 15;
+
+xterm -fs 11 -fa AndroidMono -geometry 79x21 -n 'terminal' -hold -e "./multi_rx.py -v 9 -c ottP25-Site-1.jason 2>`tty`" &
+thePID=$!
+echo $thePID
+wait $thePID
+
+

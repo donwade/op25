@@ -54,7 +54,7 @@ op25GoldenDefaultObj = {
         {
             "args": "airspy=0",
             "frequency": 868662500,
-            "gains": "LNA:15,MIX:15,IF:5",
+            "gains": "LNA:10,MIX:3,IF:14",
             "gain_mode": False,
             "name": "sdr0",
             "offset": 0,
