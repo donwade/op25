@@ -29,10 +29,9 @@ os.system('clear')
 op25GoldenDefaultObj = {
     "channels": [
         {
-            "name": "Voice_ch1",
+            "name": "control channel", 
             "device": "sdr0",
-            "trunking_sysname": "PTBO city",
-            "meta_stream_name": "stream_0",
+            "trunking_sysname": "Example",
             "demod_type": "fsk4", 
             "cqpsk_tracking": False,
             "tracking_threshold": 120,
@@ -40,7 +39,6 @@ op25GoldenDefaultObj = {
             "destination": "udp://127.0.0.1:23466",
             "excess_bw": 0.2,
             "filter_type": "rc",
-            "frequency": 773843750,
             "if_rate": 24000,
             "plot": "",
             "symbol_rate": 4800,
@@ -55,7 +53,6 @@ op25GoldenDefaultObj = {
             "args": "airspy=0",
             "frequency": 868662500,
             "gains": "LNA:10,MIX:3,IF:14",
-            "gain_mode": False,
             "name": "sdr0",
             "offset": 0,
             "ppm": 0.00,
@@ -68,13 +65,13 @@ op25GoldenDefaultObj = {
         "module": "tk_p25.py",
         "chans": [
             {
-                "nac": "0x0",
-                "sysname": "Ottawa",
+                "sysname": "Example",
+                "nac": "",
                 "control_channel_list": "868.6625",
                 "whitelist": "",
                 "blacklist": "",
-                "tgid_tags_file": "trunk-tags.tsv",
-                "rid_tags_file": "trunk-rids.tsv",
+                "tgid_tags_file": "",
+                "rid_tags_file": "",
                 "tdma_cc": False,
                 "crypt_behavior": 2
             }
