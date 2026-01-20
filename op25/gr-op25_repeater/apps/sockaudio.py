@@ -1,19 +1,19 @@
 # Copyright 2017, 2018 Graham Norbury
-# 
+#
 # Copyright 2011, 2012, 2013, 2014, 2015, 2016, 2017 Max H. Parke KA1RBI
-# 
+#
 # This file is part of OP25
-# 
+#
 # OP25 is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3, or (at your option)
 # any later version.
-# 
+#
 # OP25 is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 # or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public
 # License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with OP25; see the file COPYING. If not, write to the Free
 # Software Foundation, Inc., 51 Franklin Street, Boston, MA
@@ -159,7 +159,7 @@ class alsasound(object):
             return err
         err = self.libasound.snd_pcm_hw_params_set_rate(self.c_pcm, c_pars, c_uint(self.rate), c_int(0))
         if err < 0:
-            sys.stderr.write("set_rate failed: %d\n" % err)
+            sys.stderr.write("set_rate failed: %d value %d\n" % (err,self.rate))
             return err
         err = self.libasound.snd_pcm_hw_params_set_buffer_size_near(self.c_pcm, c_pars, byref(pcm_buf_sz))
         if err < 0:
@@ -331,7 +331,7 @@ class pa_sound(object):
 
 
 # Wrapper to emulate pcm writes of sound samples to stdout (for liquidsoap)
-class stdout_wrapper(object): 
+class stdout_wrapper(object):
     def __init__(self):
         self.silence = bytearray(640)
         pass
@@ -364,7 +364,7 @@ class stdout_wrapper(object):
 
     def check(self):
         rc = 0
-        if (self.write(self.silence) < 0) or (self.drain() < 0): # write silence to check pipe connectivity 
+        if (self.write(self.silence) < 0) or (self.drain() < 0): # write silence to check pipe connectivity
             rc = -1
         return rc
 
@@ -454,7 +454,7 @@ class socket_audio(object):
                 continue
 
             if (((flag_a == 1) and (flag_b == 1)) or
-                ((flag_a == 1) and (in_b is None)) or 
+                ((flag_a == 1) and (in_b is None)) or
                 ((flag_b == 1) and (in_a is None))):
                 rc = self.pcm.drop()
                 if isinstance(rc, ctypes.c_int):

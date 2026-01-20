@@ -1,5 +1,8 @@
 #!/bin/bash
 
 #strace ./multi_rx.py -v 9 -c smartnet_opp.json 
-./multi_rx.py -v 9 -c smartnet_kinburn.json
 #./multi_rx.py -v 9 -c smartnet_opp.json 2> stderr.2
+#xterm -e ./multi_rx.py -v 9 -c smartnet_kinburn.json
+xterm -fs 11 -fa AndroidMono -geometry 79x21 -n 'terminal' -hold -e "./multi_rx.py -v 9 -c smartnet_kinburn.json 2>`tty`" &
+
+#./multi_rx.py -v 9 -c smartnet_kinburn.json
